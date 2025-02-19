@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "398019789180",
+    "project_id": "trate-61093",
+    "storage_bucket": "trate-61093.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:398019789180:android:59b36c517eb15ece0764f9",
+        "android_client_info": {
+          "package_name": "com.example.trate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAIYPGa6ibYYR7dralSEmM1f6H5NK5HqSY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
