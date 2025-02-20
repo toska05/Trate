@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:trate/services/login_service.dart';
 // import 'package:trate/pages/form_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -12,7 +13,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final String userEmail = "user@example.com";
+  final String userEmail = "${LoginService.getCurrentUserEmail() ?? ''}";
 
   final List<Map<String, String>> exampleTranslations = [
     {"original": "Hello", "translated": "Hola"},
@@ -122,6 +123,7 @@ class _ProfilePageState extends State<ProfilePage> {
               userEmail,
               style: const TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.w300),
             ),
+
             const SizedBox(height: 35),
             Text("Your Translations", style: GoogleFonts.bebasNeue(fontSize: 34, color: theme.onSurface)),
             const SizedBox(height: 28),

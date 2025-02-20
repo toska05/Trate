@@ -3,9 +3,11 @@ import 'dart:convert';
 import 'package:trate/models/login_model.dart';
 
 class LoginService {
+  static LoginResponseModel? _currentUser;
+
   Future<LoginResponseModel> login(LoginRequestModel requestModel) async {
-    String url = 'https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/auth/login';
-    
+    String url = "https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/auth/login";
+
     try {
       final response = await http.post(
         Uri.parse(url),
@@ -14,74 +16,57 @@ class LoginService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 400) {
-        return LoginResponseModel.fromJson(json.decode(response.body));
+        var data = json.decode(response.body);
+        _currentUser = LoginResponseModel.fromJson(data, requestModel.email);
+        return _currentUser!;
       } else {
-        throw Exception("Unexpected status: ${response.statusCode}");
+        throw Exception("Login failed");
       }
     } catch (e) {
       throw Exception("Login request failed: $e");
     }
   }
+
+  static LoginResponseModel? getCurrentUser() {
+    return _currentUser;
+  }
+
+  static String? getCurrentUserEmail() {
+    return _currentUser?.email;
+  }
+
+  static void logout() {
+    _currentUser = null;
+  }
 }
 
 
+//     try {
+//       final response = await http.post(
+//         Uri.parse(url),
+//         headers: {"Content-Type": "application/json"},  
+//         body: jsonEncode(requestModel.toJson()), 
+//       );
+
+//       if (response.statusCode == 200 || response.statusCode == 400) {
+//         return LoginResponseModel.fromJson(json.decode(response.body));
+//       } else {
+//         throw Exception('Błąd logowania: ${response.statusCode}');
+//       }
+//     } catch (e) {
+//       throw Exception('Błąd połączenia: $e');
+//     }
+//   }
+// }
 
 
+//test
 // import 'package:http/http.dart' as http;
 // import 'dart:convert';
 // import 'package:trate/models/login_model.dart';
 
 // class LoginService {
-//   Future<LoginResponseModel> login(LoginRequestModel requestModel) async {
-//     String url = "https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/auth/login";  // Upewnij się, że URL jest pełny i poprawny
-
-//     try {
-//       final response = await http.post(
-//         Uri.parse(url),
-//         headers: {"Content-Type": "application/json"},  // Nagłówek informujący o formacie JSON
-//         body: jsonEncode(requestModel.toJson()), // Zamiana obiektu na JSON
-//       );
-
-//       if (response.statusCode == 200 || response.statusCode == 400) {
-//         return LoginResponseModel.fromJson(json.decode(response.body));
-//       } else {
-//         throw Exception('Błąd logowania: ${response.statusCode}');
-//       }
-//     } catch (e) {
-//       throw Exception('Błąd połączenia: $e');
-//     }
-//   }
-// }
-
-
-
-
-
-// import 'package:http/http.dart' as http;
-// import 'dart:convert';
-// import 'package:trate/pages/login/login_model.dart';
-// import 'package:trate/components/custom_http_client.dart'; 
-
-// class APIService {
-//   final http.Client client = CustomHttpClient.create(); 
+//   static LoginResponseModel? _currentUser;
 
 //   Future<LoginResponseModel> login(LoginRequestModel requestModel) async {
-//     String url = "https://34.34.140.113/";
-
-//     try {
-//       final response = await client.post(
-//         Uri.parse(url),
-//         headers: {"Content-Type": "application/json"},
-//         body: jsonEncode(requestModel.toJson()),
-//       );
-
-//       if (response.statusCode == 200 || response.statusCode == 400) {
-//         return LoginResponseModel.fromJson(json.decode(response.body));
-//       } else {
-//         throw Exception('Błąd logowania: ${response.statusCode}');
-//       }
-//     } catch (e) {
-//       throw Exception('Błąd połączenia: $e');
-//     }
-//   }
-// }
+//     String url = 'https://reqres.in/api/login';

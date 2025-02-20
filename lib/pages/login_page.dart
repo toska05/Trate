@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 // import 'package:lottie/lottie.dart';
@@ -17,7 +19,15 @@ class _LoginPageState extends State<LoginPage> {
   bool isApiCallProcess = false;
   final GlobalKey<FormState> globalFormKey = GlobalKey<FormState>();
   late LoginRequestModel loginRequestModel;
-  final scaffoldKey = GlobalKey<ScaffoldState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -36,7 +46,6 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _uiSetup(BuildContext context) {
     return Scaffold(
-      key: scaffoldKey,
       backgroundColor: Theme.of(context).colorScheme.secondary,
       body: SingleChildScrollView(
         child: Column(
@@ -75,27 +84,35 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         SizedBox(height: 20),
                         TextFormField(
-                          keyboardType: TextInputType.emailAddress,
-                          onSaved: (input) => loginRequestModel.email = input!,
+                          controller: _emailController,
+                          keyboardType: TextInputType.text,
+                          // onSaved: (input) => loginRequestModel.email = input!,
                           validator:
                               (input) =>
                                   !input!.contains('@')
                                       ? "Email Id should be valid"
                                       : null,
+                          // decoration: InputDecoration(
+                          //   hintText: "Email Address",
+                          //   enabledBorder: UnderlineInputBorder(
+                          //     borderSide: BorderSide(
+                          //       color: Theme.of(
+                          //         context,
+                          //       ).colorScheme.secondary.withValues(alpha: 0.2),
+                          //     ),
+                          //   ),
+                          //   focusedBorder: UnderlineInputBorder(
+                          //     borderSide: BorderSide(
+                          //       color: Theme.of(context).colorScheme.secondary,
+                          //     ),
+                          //   ),
+                          //   prefixIcon: Icon(
+                          //     Icons.email,
+                          //     color: Theme.of(context).colorScheme.secondary,
+                          //   ),
+                          // ),
                           decoration: InputDecoration(
                             hintText: "Email Address",
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.secondary.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.secondary,
-                              ),
-                            ),
                             prefixIcon: Icon(
                               Icons.email,
                               color: Theme.of(context).colorScheme.secondary,
@@ -104,32 +121,52 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         SizedBox(height: 20),
                         TextFormField(
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
+                          controller: _passwordController,
                           keyboardType: TextInputType.text,
-                          onSaved:
-                              (input) => loginRequestModel.password = input!,
+                          // onSaved:
+                          //     (input) => loginRequestModel.password = input!,
                           validator:
                               (input) =>
                                   input!.length < 3
                                       ? "Password should be more than 3 characters"
                                       : null,
                           obscureText: hidePassword,
+                          // decoration: InputDecoration(
+                          //   hintText: "Password",
+                          //   enabledBorder: UnderlineInputBorder(
+                          //     borderSide: BorderSide(
+                          //       color: Theme.of(
+                          //         context,
+                          //       ).colorScheme.secondary.withValues(alpha: 0.2),
+                          //     ),
+                          //   ),
+                          //   focusedBorder: UnderlineInputBorder(
+                          //     borderSide: BorderSide(
+                          //       color: Theme.of(context).colorScheme.secondary,
+                          //     ),
+                          //   ),
+                          //   prefixIcon: Icon(
+                          //     Icons.lock,
+                          //     color: Theme.of(context).colorScheme.secondary,
+                          //   ),
+                          //   suffixIcon: IconButton(
+                          //     onPressed: () {
+                          //       setState(() {
+                          //         hidePassword = !hidePassword;
+                          //       });
+                          //     },
+                          //     color: Theme.of(
+                          //       context,
+                          //     ).colorScheme.secondary.withValues(alpha: 0.2),
+                          //     icon: Icon(
+                          //       hidePassword
+                          //           ? Icons.visibility_off
+                          //           : Icons.visibility,
+                          //     ),
+                          //   ),
+                          // ),
                           decoration: InputDecoration(
                             hintText: "Password",
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.secondary.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.secondary,
-                              ),
-                            ),
                             prefixIcon: Icon(
                               Icons.lock,
                               color: Theme.of(context).colorScheme.secondary,
@@ -140,9 +177,6 @@ class _LoginPageState extends State<LoginPage> {
                                   hidePassword = !hidePassword;
                                 });
                               },
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.secondary.withValues(alpha: 0.2),
                               icon: Icon(
                                 hidePassword
                                     ? Icons.visibility_off
@@ -152,6 +186,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         SizedBox(height: 30),
+
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.symmetric(
@@ -170,6 +205,11 @@ class _LoginPageState extends State<LoginPage> {
                                 isApiCallProcess = true;
                               });
 
+                              loginRequestModel.email =
+                                  _emailController.text;
+                              loginRequestModel.password =
+                                  _passwordController.text;
+
                               LoginService apiService = LoginService();
                               apiService
                                   .login(loginRequestModel)
@@ -183,27 +223,21 @@ class _LoginPageState extends State<LoginPage> {
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) => NavBar(),
-                                        ), // Replace HomePage with your actual home page widget
+                                        ),
                                       );
                                     } else {
-                                      final snackBar = SnackBar(
-                                        content: Text(value.error),
-                                      );
                                       ScaffoldMessenger.of(
                                         context,
-                                      ).showSnackBar(snackBar);
+                                      ).showSnackBar(
+                                        SnackBar(content: Text(value.error)),
+                                      );
                                     }
                                   })
                                   .catchError((e) {
-                                    setState(() {
-                                      isApiCallProcess = false;
-                                    });
-                                    final snackBar = SnackBar(
-                                      content: Text("Error: $e"),
+                                    setState(() => isApiCallProcess = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text("Error: $e")),
                                     );
-                                    ScaffoldMessenger.of(
-                                      context,
-                                    ).showSnackBar(snackBar);
                                   });
                             }
                           },
@@ -212,6 +246,7 @@ class _LoginPageState extends State<LoginPage> {
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
+
                         SizedBox(height: 15),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -260,4 +295,3 @@ class _LoginPageState extends State<LoginPage> {
     return false;
   }
 }
-// hi

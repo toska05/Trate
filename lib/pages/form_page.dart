@@ -126,11 +126,10 @@ class FormPage extends StatefulWidget {
 class _FormPageState extends State<FormPage> {
   final _textController = TextEditingController();
   final _translationController = TextEditingController();
-  String _selectedLanguage = 'Arabic';
+  String _selectedLanguage = 'English';
 
   final List<String> _languages = [
-    'Arabic', 'Chinese', 'French', 'German', 'Italian',
-    'Japanese', 'Polish', 'Portuguese', 'Russian', 'Spanish'
+    "English", "Italian", "Polsih"
   ];
 
   @override
@@ -163,6 +162,35 @@ class _FormPageState extends State<FormPage> {
                   style: GoogleFonts.bebasNeue(fontSize: 45, color: theme.onSurface),
                 ),
                 const SizedBox(height: 30),
+
+                DropdownButtonFormField<String>(
+                  value: _selectedLanguage,
+                  decoration: InputDecoration(
+                    labelText: "Select language for the original text",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    filled: true,
+                    fillColor: theme.surface,
+                  ),
+                  items: _languages.map((lang) {
+                    return DropdownMenuItem(
+                      value: lang,
+                      child: Text(
+                        lang,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w300,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedLanguage = newValue!;
+                    });
+                  },
+                ),
+                const SizedBox(height: 15),
 
                 TextField(
                   controller: _textController,

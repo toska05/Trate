@@ -1,13 +1,23 @@
 class RegisterResponseModel {
   final String token;
+  final int uid;
   final String error;
+  final String email;
 
-  RegisterResponseModel({required this.token, required this.error});
+  RegisterResponseModel({
+    required this.uid, 
+    required this.token, 
+    required this.error,
+    required this.email,
+  });
 
-  factory RegisterResponseModel.fromJson(Map<String, dynamic> json) {
+  factory RegisterResponseModel.fromJson(Map<String, dynamic> json, String email) {
     return RegisterResponseModel(
-      token: json["token"] ?? "",
+      uid: json["uid"] ?? 0,
+      token: json["authorization_token"] ?? "",
       error: json["error"] ?? "",
+      // error: json["error"] is String ? json["error"] : json["error"].toString(),
+      email: email,
     );
   }
 }
