@@ -92,32 +92,32 @@ class _LoginPageState extends State<LoginPage> {
                                   !input!.contains('@')
                                       ? "Email Id should be valid"
                                       : null,
-                          // decoration: InputDecoration(
-                          //   hintText: "Email Address",
-                          //   enabledBorder: UnderlineInputBorder(
-                          //     borderSide: BorderSide(
-                          //       color: Theme.of(
-                          //         context,
-                          //       ).colorScheme.secondary.withValues(alpha: 0.2),
-                          //     ),
-                          //   ),
-                          //   focusedBorder: UnderlineInputBorder(
-                          //     borderSide: BorderSide(
-                          //       color: Theme.of(context).colorScheme.secondary,
-                          //     ),
-                          //   ),
-                          //   prefixIcon: Icon(
-                          //     Icons.email,
-                          //     color: Theme.of(context).colorScheme.secondary,
-                          //   ),
-                          // ),
                           decoration: InputDecoration(
                             hintText: "Email Address",
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.secondary.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                            ),
                             prefixIcon: Icon(
                               Icons.email,
                               color: Theme.of(context).colorScheme.secondary,
                             ),
                           ),
+                          // decoration: InputDecoration(
+                          //   hintText: "Email Address",
+                          //   prefixIcon: Icon(
+                          //     Icons.email,
+                          //     color: Theme.of(context).colorScheme.secondary,
+                          //   ),
+                          // ),
                         ),
                         SizedBox(height: 20),
                         TextFormField(
@@ -131,42 +131,20 @@ class _LoginPageState extends State<LoginPage> {
                                       ? "Password should be more than 3 characters"
                                       : null,
                           obscureText: hidePassword,
-                          // decoration: InputDecoration(
-                          //   hintText: "Password",
-                          //   enabledBorder: UnderlineInputBorder(
-                          //     borderSide: BorderSide(
-                          //       color: Theme.of(
-                          //         context,
-                          //       ).colorScheme.secondary.withValues(alpha: 0.2),
-                          //     ),
-                          //   ),
-                          //   focusedBorder: UnderlineInputBorder(
-                          //     borderSide: BorderSide(
-                          //       color: Theme.of(context).colorScheme.secondary,
-                          //     ),
-                          //   ),
-                          //   prefixIcon: Icon(
-                          //     Icons.lock,
-                          //     color: Theme.of(context).colorScheme.secondary,
-                          //   ),
-                          //   suffixIcon: IconButton(
-                          //     onPressed: () {
-                          //       setState(() {
-                          //         hidePassword = !hidePassword;
-                          //       });
-                          //     },
-                          //     color: Theme.of(
-                          //       context,
-                          //     ).colorScheme.secondary.withValues(alpha: 0.2),
-                          //     icon: Icon(
-                          //       hidePassword
-                          //           ? Icons.visibility_off
-                          //           : Icons.visibility,
-                          //     ),
-                          //   ),
-                          // ),
                           decoration: InputDecoration(
                             hintText: "Password",
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.secondary.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                            ),
                             prefixIcon: Icon(
                               Icons.lock,
                               color: Theme.of(context).colorScheme.secondary,
@@ -177,6 +155,9 @@ class _LoginPageState extends State<LoginPage> {
                                   hidePassword = !hidePassword;
                                 });
                               },
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.secondary.withValues(alpha: 0.2),
                               icon: Icon(
                                 hidePassword
                                     ? Icons.visibility_off
@@ -184,6 +165,25 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                           ),
+                          // decoration: InputDecoration(
+                          //   hintText: "Password",
+                          //   prefixIcon: Icon(
+                          //     Icons.lock,
+                          //     color: Theme.of(context).colorScheme.secondary,
+                          //   ),
+                          //   suffixIcon: IconButton(
+                          //     onPressed: () {
+                          //       setState(() {
+                          //         hidePassword = !hidePassword;
+                          //       });
+                          //     },
+                          //     icon: Icon(
+                          //       hidePassword
+                          //           ? Icons.visibility_off
+                          //           : Icons.visibility,
+                          //     ),
+                          //   ),
+                          // ),
                         ),
                         SizedBox(height: 30),
 
@@ -198,8 +198,8 @@ class _LoginPageState extends State<LoginPage> {
                             shape: StadiumBorder(),
                           ),
                           onPressed: () {
+                            print(validateAndSave());
                             if (validateAndSave()) {
-                              print(loginRequestModel.toJson());
 
                               setState(() {
                                 isApiCallProcess = true;
@@ -209,6 +209,7 @@ class _LoginPageState extends State<LoginPage> {
                                   _emailController.text;
                               loginRequestModel.password =
                                   _passwordController.text;
+                              print(loginRequestModel.toJson());
 
                               LoginService apiService = LoginService();
                               apiService

@@ -17,6 +17,7 @@ class LoginService {
 
       if (response.statusCode == 200 || response.statusCode == 400) {
         var data = json.decode(response.body);
+        print(data);
         _currentUser = LoginResponseModel.fromJson(data, requestModel.email);
         return _currentUser!;
       } else {

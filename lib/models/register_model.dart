@@ -1,6 +1,6 @@
 class RegisterResponseModel {
   final String token;
-  final int uid;
+  final String uid;
   final String error;
   final String email;
 
