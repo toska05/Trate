@@ -186,8 +186,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:trate/services/test_service.dart';
-import 'package:trate/models/test_model.dart';
+import 'package:trate/services/grade_service.dart';
+import 'package:trate/models/grade_model.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -207,7 +207,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   getData() async {
-    posts = await TestService().getPosts();
+    posts = await GradeService().getPosts();
     if (posts != null) {
       setState(() {
         isLoaded = true;
@@ -225,6 +225,8 @@ class _HomePageState extends State<HomePage> {
       "liked": false,
       "likes": 3,
       "starred": false,
+      "stars": 5,
+      "aied" : false,
     },
     {
       "user": "bob@example.com",
@@ -235,6 +237,8 @@ class _HomePageState extends State<HomePage> {
       "liked": false,
       "likes": 5,
       "starred": false,
+      "stars": 8,
+      "aied": false,
     },
     {
       "user": "charlie@example.com",
@@ -245,6 +249,8 @@ class _HomePageState extends State<HomePage> {
       "liked": false,
       "likes": 2,
       "starred": false,
+      "stars": 0,
+      "aied": false,
     },
   ];
 
@@ -261,7 +267,18 @@ class _HomePageState extends State<HomePage> {
 
   void _toggleStar(int index) {
     setState(() {
+      if (translations[index]["starred"]) {
+        translations[index]["stars"]--;
+      } else {
+        translations[index]["stars"]++;
+      }
       translations[index]["starred"] = !translations[index]["starred"];
+    });
+  }
+
+  void _toggleAI(int index) {
+    setState(() {
+      translations[index]["aied"] = !translations[index]["aied"];
     });
   }
 
@@ -299,12 +316,12 @@ class _HomePageState extends State<HomePage> {
                         //   translation["original"],
                         //   style: const TextStyle(fontWeight: FontWeight.bold),
                         // ),
-                        title: Text(posts![index].title, style: TextStyle(fontWeight: FontWeight.bold)),
+                        title: Text(posts![index].originalText, style: TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Text(translation["translated"]),
-                            Text(posts![index].body ?? ''),
+                            Text(posts![index].translatedLang),
                             Text(
                               "Language: ${translation["language"]}",
                               style: const TextStyle(fontSize: 12, color: Colors.grey),
@@ -320,10 +337,21 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             IconButton(
                               icon: Icon(
+                                translation["aied"] ? Icons.smart_button : Icons.smart_button_outlined,
+                                color: translation["aied"] ? Colors.blue : Colors.grey,
+                              ),
+                              onPressed: () => _toggleAI(index),
+                            ),
+                            IconButton(
+                              icon: Icon(
                                 translation["starred"] ? Icons.star : Icons.star_border,
                                 color: translation["starred"] ? Colors.yellow : Colors.grey,
                               ),
                               onPressed: () => _toggleStar(index),
+                            ),
+                            Text(
+                              "${translation["stars"]}",
+                              style: const TextStyle(fontSize: 14),
                             ),
                             IconButton(
                               icon: Icon(
@@ -339,7 +367,7 @@ class _HomePageState extends State<HomePage> {
                           ],
                         ),
                       ),
-                      if (translation["starred"]) ...[
+                      if (translation["aied"]) ...[
                         const Divider(),
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
