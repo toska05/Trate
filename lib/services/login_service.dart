@@ -4,17 +4,22 @@ import 'package:trate/models/login_model.dart';
 
 class LoginService {
   Future<LoginResponseModel> login(LoginRequestModel requestModel) async {
-    String url = "https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/auth/login";
+    String url = 'https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/auth/login';
     
-    final response = await http.post(
-      Uri.parse(url),
-      body: requestModel.toJson(),
-    );
-    
-    if (response.statusCode == 200 || response.statusCode == 400) {
-      return LoginResponseModel.fromJson(json.decode(response.body));
-    } else {
-      throw Exception(response.statusCode);
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(requestModel.toJson()),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 400) {
+        return LoginResponseModel.fromJson(json.decode(response.body));
+      } else {
+        throw Exception("Unexpected status: ${response.statusCode}");
+      }
+    } catch (e) {
+      throw Exception("Login request failed: $e");
     }
   }
 }

@@ -4,7 +4,7 @@ import 'package:trate/models/register_model.dart';
 
 class APIService {
   Future<RegisterResponseModel> register(RegisterRequestModel requestModel) async {
-    String url = "https://reqres.in/api/register";
+    String url = "https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/auth/register";
 
     final response = await http.post(
       Uri.parse(url),
