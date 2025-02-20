@@ -13,6 +13,7 @@ class GradeService {
       if (response.statusCode == 200 || response.statusCode == 400) {
         var jsonData = json.decode(response.body) as List;
         List<Post> posts = jsonData.map((item) => Post.fromJson(item)).toList();
+        print(posts);
         return posts;
       } else {
         throw Exception('Failed to load data!');
