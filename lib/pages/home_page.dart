@@ -23,6 +23,67 @@ class _HomePageState extends State<HomePage> {
     _uploadTranslations();
   }
 
+  // Future<void> _uploadTranslations() async {
+  //   final user = SessionManager().getCurrentUser();
+  //   final userId = user?.uid;
+  //   final token = user?.token;
+
+  //   if (userId == null || token == null) {
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text("Session expired. Please login again.")),
+  //       );
+  //     }
+  //     return;
+  //   }
+
+  //   try {
+  //     final response = await http.post(
+  //       Uri.parse('https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section'),
+  //       headers: {"Content-Type": "application/json"},
+  //       body: jsonEncode({
+  //         "uid": userId,
+  //         "authorization_token": token
+  //       }),
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final dynamic data = json.decode(response.body);
+  //       print("API Response: ${response.body}");
+
+  //       if (data is Map && data.containsKey('grade')) {
+  //         final List<dynamic> grade = data['grade'];
+  //         setState(() {
+  //           uploadedTranslations = grade.cast<Map<String, dynamic>>();
+  //           isLoaded = true;
+  //         });
+  //       } else {
+  //         setState(() {
+  //           isLoaded = true;
+  //         });
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(content: Text("No translations found.")),
+  //         );
+  //       }
+  //     } else {
+  //       setState(() {
+  //         isLoaded = true;
+  //       });
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text("Failed to fetch translations: ${response.statusCode}")),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     setState(() {
+  //       isLoaded = true;
+  //     });
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text("Error fetching translations: ${e.toString()}")),
+  //     );
+  //   }
+  // }
+
+
   Future<void> _uploadTranslations() async {
     final user = SessionManager().getCurrentUser();
     final userId = user?.uid;
@@ -53,6 +114,14 @@ class _HomePageState extends State<HomePage> {
 
         if (data is Map && data.containsKey('grade')) {
           final List<dynamic> grade = data['grade'];
+          List<Future<void>> fetchLikesTasks = [];
+
+          for (var translation in grade) {
+            fetchLikesTasks.add(_fetchLikesForTranslation(translation, userId, token));
+          }
+
+          await Future.wait(fetchLikesTasks);
+
           setState(() {
             uploadedTranslations = grade.cast<Map<String, dynamic>>();
             isLoaded = true;
@@ -83,74 +152,108 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  
+  Future<void> _fetchLikesForTranslation(Map<String, dynamic> translation, String userId, String token) async {
+    final id = translation["id"];
+    if (id == null) return;
 
-  final List<Map<String, dynamic>> templates = [
-    {
-      "user": "alice@example.com",
-      "original": "Hello",
-      "translated": "Hola",
-      "alternative": "Buenos días",
-      "language": "Spanish",
-      "liked": false,
-      "likes": 3,
-      "starred": false,
-      "stars": 5,
-      "aied" : false,
-    },
-    {
-      "user": "bob@example.com",
-      "original": "Thank you",
-      "translated": "Merci",
-      "alternative": "Je vous remercie",
-      "language": "French",
-      "liked": false,
-      "likes": 5,
-      "starred": false,
-      "stars": 8,
-      "aied": false,
-    },
-    {
-      "user": "charlie@example.com",
-      "original": "Good morning",
-      "translated": "Guten Morgen",
-      "alternative": "Guten Tag",
-      "language": "German",
-      "liked": false,
-      "likes": 2,
-      "starred": false,
-      "stars": 0,
-      "aied": false,
-    },
-  ];
+    try {
+      final likesResponse = await http.post(
+        Uri.parse('https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/likesamount'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"uid": userId, "authorization_token": token}),
+      );
 
-  void _toggleLike(int index) {
-    setState(() {
-      if (templates[index]["liked"]) {
-        templates[index]["likes"]--;
-      } else {
-        templates[index]["likes"]++;
+      if (likesResponse.statusCode == 200) {
+        final likesData = json.decode(likesResponse.body);
+        translation["human_likes"] = likesData["human_likes"] ?? 0;
+        translation["ai_likes"] = likesData["ai_likes"] ?? 0;
       }
-      templates[index]["liked"] = !templates[index]["liked"];
-    });
-  }
 
-  void _toggleStar(int index) {
-    setState(() {
-      if (templates[index]["starred"]) {
-        templates[index]["stars"]--;
-      } else {
-        templates[index]["stars"]++;
+      final likedResponse = await http.post(
+        Uri.parse('https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/liked'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"uid": userId, "authorization_token": token}),
+      );
+
+      if (likedResponse.statusCode == 200) {
+        final likedData = json.decode(likedResponse.body);
+        translation["liked_human"] = likedData["liked_human"] ?? false;
+        translation["liked_ai"] = likedData["liked_ai"] ?? false;
       }
-      templates[index]["starred"] = !templates[index]["starred"];
-    });
+    } catch (e) {
+      print("Error fetching likes for translation $id: $e");
+    }
   }
 
-  void _toggleAI(int index) {
-    setState(() {
-      templates[index]["aied"] = !templates[index]["aied"];
-    });
+  void _toggleLikeHuman(int index) async {
+    final translation = uploadedTranslations[index];
+    final id = translation["id"];
+    final user = SessionManager().getCurrentUser();
+    final userId = user?.uid;
+    final token = user?.token;
+
+    if (id == null || userId == null || token == null) return;
+
+    final bool liked = translation["liked_human"] ?? false;
+    final endpoint = liked 
+        ? "https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/human/unlike" 
+        : "https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/human/like";
+
+    try {
+      final response = await http.post(
+        Uri.parse(endpoint),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"uid": userId, "authorization_token": token}),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          translation["liked_human"] = !liked;
+          translation["human_likes"] += liked ? -1 : 1;
+        });
+      }
+    } catch (e) {
+      print("Error liking/unliking human translation: $e");
+    }
   }
+
+void _toggleLikeAI(int index) async {
+  final translation = uploadedTranslations[index];
+  final id = translation["id"];
+  final user = SessionManager().getCurrentUser();
+  final userId = user?.uid;
+  final token = user?.token;
+
+  if (id == null || userId == null || token == null) return;
+
+  final bool liked = translation["liked_ai"] ?? false;
+  final endpoint = liked 
+      ? "https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/ai/unlike" 
+      : "https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/ai/like";
+
+  try {
+    final response = await http.post(
+      Uri.parse(endpoint),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"uid": userId, "authorization_token": token}),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        translation["liked_ai"] = !liked;
+        translation["ai_likes"] += liked ? -1 : 1;
+      });
+    }
+  } catch (e) {
+    print("Error liking/unliking AI translation: $e");
+  }
+}
+
+  // void _toggleAI(int index) {
+  //   setState(() {
+  //     templates[index]["aied"] = !templates[index]["aied"];
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +273,7 @@ class _HomePageState extends State<HomePage> {
           child: ListView.builder(
             itemCount: uploadedTranslations.length,
             itemBuilder: (context, index) {
-              final template = templates[index];
+              // final template = templates[index];
               final translation = uploadedTranslations[index];
               final userUid = translation["id"] ?? "";
               final originalText = translation["original_text"] ?? "";
@@ -211,48 +314,36 @@ class _HomePageState extends State<HomePage> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            Text("${translation["human_likes"]}"),
                             IconButton(
                               icon: Icon(
-                                template["aied"] ? Icons.smart_button : Icons.smart_button_outlined,
-                                color: template["aied"] ? Colors.blue : Colors.grey,
+                                translation["liked_human"] ? Icons.favorite : Icons.favorite_border,
+                                color: translation["liked_human"] ? Colors.red : Colors.grey,
                               ),
-                              onPressed: () => _toggleAI(index),
+                              onPressed: () => _toggleLikeHuman(index),
                             ),
+
+                            Text("${translation["ai_likes"]}"),
                             IconButton(
                               icon: Icon(
-                                template["starred"] ? Icons.star : Icons.star_border,
-                                color: template["starred"] ? Colors.yellow : Colors.grey,
+                                translation["liked_ai"] ? Icons.star : Icons.star_border,
+                                color: translation["liked_ai"] ? Colors.yellow : Colors.grey,
                               ),
-                              onPressed: () => _toggleStar(index),
-                            ),
-                            Text(
-                              "${template["stars"]}",
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                template["liked"] ? Icons.favorite : Icons.favorite_border,
-                                color: template["liked"] ? Colors.red : Colors.grey,
-                              ),
-                              onPressed: () => _toggleLike(index),
-                            ),
-                            Text(
-                              "${template["likes"]}",
-                              style: const TextStyle(fontSize: 14),
+                              onPressed: () => _toggleLikeAI(index),
                             ),
                           ],
                         ),
                       ),
-                      if (template["aied"]) ...[
-                        const Divider(),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            "AI: ${aiTranslated}",
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ),
-                      ],
+                      // if (template["aied"]) ...[
+                      //   const Divider(),
+                      //   Padding(
+                      //     padding: const EdgeInsets.only(top: 8),
+                      //     child: Text(
+                      //       "AI: ${aiTranslated}",
+                      //       style: const TextStyle(fontSize: 16),
+                      //     ),
+                      //   ),
+                      // ],
                     ],
                   ),
                 ),
