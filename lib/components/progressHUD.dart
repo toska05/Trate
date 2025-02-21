@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-// import 'package:lottie/lottie.dart';
 
 class ProgressHUD extends StatelessWidget {
   final Widget child;

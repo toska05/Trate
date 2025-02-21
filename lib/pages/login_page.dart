@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-// import 'package:lottie/lottie.dart';
 import 'package:trate/services/login_service.dart';
 import 'package:trate/models/login_model.dart';
 import 'package:trate/components/progressHUD.dart';
@@ -17,7 +16,15 @@ class _LoginPageState extends State<LoginPage> {
   bool isApiCallProcess = false;
   final GlobalKey<FormState> globalFormKey = GlobalKey<FormState>();
   late LoginRequestModel loginRequestModel;
-  final scaffoldKey = GlobalKey<ScaffoldState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -36,7 +43,6 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _uiSetup(BuildContext context) {
     return Scaffold(
-      key: scaffoldKey,
       backgroundColor: Theme.of(context).colorScheme.secondary,
       body: SingleChildScrollView(
         child: Column(
@@ -75,8 +81,8 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         SizedBox(height: 20),
                         TextFormField(
-                          keyboardType: TextInputType.emailAddress,
-                          onSaved: (input) => loginRequestModel.email = input!,
+                          controller: _emailController,
+                          keyboardType: TextInputType.text,
                           validator:
                               (input) =>
                                   !input!.contains('@')
@@ -104,12 +110,8 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         SizedBox(height: 20),
                         TextFormField(
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
+                          controller: _passwordController,
                           keyboardType: TextInputType.text,
-                          onSaved:
-                              (input) => loginRequestModel.password = input!,
                           validator:
                               (input) =>
                                   input!.length < 3
@@ -152,6 +154,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         SizedBox(height: 30),
+
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.symmetric(
@@ -163,12 +166,18 @@ class _LoginPageState extends State<LoginPage> {
                             shape: StadiumBorder(),
                           ),
                           onPressed: () {
+                            print(validateAndSave());
                             if (validateAndSave()) {
-                              print(loginRequestModel.toJson());
 
                               setState(() {
                                 isApiCallProcess = true;
                               });
+
+                              loginRequestModel.email =
+                                  _emailController.text;
+                              loginRequestModel.password =
+                                  _passwordController.text;
+                              print(loginRequestModel.toJson());
 
                               LoginService apiService = LoginService();
                               apiService
@@ -183,27 +192,21 @@ class _LoginPageState extends State<LoginPage> {
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) => NavBar(),
-                                        ), // Replace HomePage with your actual home page widget
+                                        ),
                                       );
                                     } else {
-                                      final snackBar = SnackBar(
-                                        content: Text(value.error),
-                                      );
                                       ScaffoldMessenger.of(
                                         context,
-                                      ).showSnackBar(snackBar);
+                                      ).showSnackBar(
+                                        SnackBar(content: Text(value.error)),
+                                      );
                                     }
                                   })
                                   .catchError((e) {
-                                    setState(() {
-                                      isApiCallProcess = false;
-                                    });
-                                    final snackBar = SnackBar(
-                                      content: Text("Error: $e"),
+                                    setState(() => isApiCallProcess = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text("Error: $e")),
                                     );
-                                    ScaffoldMessenger.of(
-                                      context,
-                                    ).showSnackBar(snackBar);
                                   });
                             }
                           },
@@ -212,6 +215,7 @@ class _LoginPageState extends State<LoginPage> {
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
+
                         SizedBox(height: 15),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -260,4 +264,3 @@ class _LoginPageState extends State<LoginPage> {
     return false;
   }
 }
-// hi

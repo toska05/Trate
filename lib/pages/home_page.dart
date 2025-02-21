@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:trate/services/test_service.dart';
-import 'package:trate/models/test_model.dart';
+import 'package:http/http.dart' as http;
+import 'package:trate/services/session_manager.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -11,153 +14,187 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Post>? posts;
-  var isLoaded = false;
+  List<Map<String, dynamic>> uploadedTranslations = [];
+  List<Future<Map<String, dynamic>>> fetchLikesTasks = [];
+  var isLoaded = true;
 
   @override
   void initState() {
     super.initState();
-
-    getData();
+    _uploadTranslations();
   }
 
-  getData() async {
-    posts = await TestService().getPosts();
-    if (posts != null) {
+  Future<void> _uploadTranslations() async {
+    final user = SessionManager().getCurrentUser();
+    final userId = user?.uid;
+    final token = user?.token;
+
+    if (userId == null || token == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Session expired. Please login again.")),
+        );
+      }
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "uid": userId,
+          "authorization_token": token
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final dynamic data = json.decode(response.body);
+
+        if (data is Map && data.containsKey('grade')) {
+          final List<dynamic> grade = data['grade'];
+          List<Future<Map<String, dynamic>>> fetchLikesTasks = [];
+
+          for (var translation in grade) {
+            fetchLikesTasks.add(_fetchLikesForTranslation(translation, userId, token));
+          }
+          
+
+          var translations = await Future.wait(fetchLikesTasks);
+
+          setState(() {
+            uploadedTranslations = translations;
+            isLoaded = true;
+          });
+        } else {
+          setState(() {
+            isLoaded = true;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("No translations found.")),
+          );
+        }
+      } else {
+        setState(() {
+          isLoaded = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to fetch translations: ${response.statusCode}")),
+        );
+      }
+    } catch (e) {
       setState(() {
         isLoaded = true;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error fetching translations: ${e.toString()}")),
+      );
     }
   }
-  
-  final List<Map<String, dynamic>> translations = [
-    {
-      "user": "alice@example.com",
-      "original": "Hello",
-      "translated": "Hola",
-      "language": "Spanish",
-      "liked": false,
-      "likes": 3,
-      "comments": [
-        {"user": "john@example.com", "text": "Great translation!"},
-        {"user": "susan@example.com", "text": "Super helpful!"},
-        {"user": "mike@example.com", "text": "I use this all the time."}
-      ]
-    },
-    {
-      "user": "bob@example.com",
-      "original": "Thank you",
-      "translated": "Merci",
-      "language": "French",
-      "liked": false,
-      "likes": 5,
-      "comments": [
-        {"user": "anna@example.com", "text": "Simple but useful."},
-        {"user": "paul@example.com", "text": "Thanks for sharing!"}
-      ]
-    },
-    {
-      "user": "charlie@example.com",
-      "original": "Good morning",
-      "translated": "Guten Morgen",
-      "language": "German",
-      "liked": false,
-      "likes": 2,
-      "comments": [
-        {"user": "lisa@example.com", "text": "Good one!"},
-        {"user": "mark@example.com", "text": "I say this every day."}
-      ]
-    },
-    {
-      "user": "david@example.com",
-      "original": "I love Flutter",
-      "translated": "Me encanta Flutter",
-      "language": "Spanish",
-      "liked": false,
-      "likes": 10,
-      "comments": [
-        {"user": "kevin@example.com", "text": "Flutter is awesome!"},
-        {"user": "emma@example.com", "text": "Completely agree!"},
-        {"user": "noah@example.com", "text": "Flutter FTW!"}
-      ]
-    },
-    {
-      "user": "sarah@example.com",
-      "original": "How are you?",
-      "translated": "Wie geht's?",
-      "language": "German",
-      "liked": false,
-      "likes": 7,
-      "comments": [
-        {"user": "daniel@example.com", "text": "Useful phrase!"},
-        {"user": "olivia@example.com", "text": "Thanks for sharing!"}
-      ]
-    },
-    {
-      "user": "tom@example.com",
-      "original": "See you later",
-      "translated": "À plus tard",
-      "language": "French",
-      "liked": false,
-      "likes": 4,
-      "comments": [
-        {"user": "chris@example.com", "text": "Nice one!"},
-        {"user": "sophie@example.com", "text": "I use this often."}
-      ]
-    },
-  ];
 
-  void _toggleLike(int index) {
-    setState(() {
-      if (translations[index]["liked"]) {
-        translations[index]["likes"]--;
-      } else {
-        translations[index]["likes"]++;
+  Future<Map<String, dynamic>> _fetchLikesForTranslation(Map<String, dynamic> translation, String userId, String token) async {
+    final id = translation["id"];
+    if (id == null) return translation;
+
+    try {
+      final likesResponse = await http.get(
+        Uri.parse('https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/likesamount'),
+        headers: {"Content-Type": "application/json"},
+      );
+      if (likesResponse.statusCode == 200) {
+        final likesData = json.decode(likesResponse.body);
+        translation["human_likes"] = likesData["human_likes"] ?? 0;
+        translation["ai_likes"] = likesData["ai_likes"] ?? 0;
       }
-      translations[index]["liked"] = !translations[index]["liked"];
-    });
+
+      final likedResponse = await http.post(
+        Uri.parse('https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/liked'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"uid": userId, "authorization_token": token}),
+      );
+
+      if (likedResponse.statusCode == 200) {
+        final likedData = json.decode(likedResponse.body);
+        translation["liked_human"] = likedData["liked_human"] ?? false;
+        translation["liked_ai"] = likedData["liked_ai"] ?? false;
+      }
+      
+    } catch (e) {
+      print("Error fetching likes for translation $id: $e");
+    }
+    return translation;
   }
 
-  // void _addComment(int index, String comment) {
-  //   setState(() {
-  //     translations[index]["comments"].add({
-  //       "user": "you@example.com", 
-  //       "text": comment
-  //     });
-  //   });
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     const SnackBar(content: Text("Comment added!")),
-  //   );
-  // }
+  void _toggleLikeHuman(int index) async {
+    final translation = uploadedTranslations[index];
+    final id = translation["id"];
+    final user = SessionManager().getCurrentUser();
+    final userId = user?.uid;
+    final token = user?.token;
 
-  // void _showCommentDialog(int index) {
-  //   final TextEditingController commentController = TextEditingController();
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) => AlertDialog(
-  //       title: const Text("Add a Comment"),
-  //       content: TextField(
-  //         controller: commentController,
-  //         decoration: const InputDecoration(hintText: "Write your comment..."),
-  //       ),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () => Navigator.pop(context),
-  //           child: const Text("Cancel"),
-  //         ),
-  //         TextButton(
-  //           onPressed: () {
-  //             if (commentController.text.isNotEmpty) {
-  //               _addComment(index, commentController.text);
-  //             }
-  //             Navigator.pop(context);
-  //           },
-  //           child: const Text("Add"),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
+    if (id == null || userId == null || token == null) return;
+
+    final bool liked = translation["liked_human"] ?? false;
+    final endpoint = liked 
+        ? "https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/human/unlike" 
+        : "https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/human/like";
+
+    try {
+      final response = await http.post(
+        Uri.parse(endpoint),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"uid": userId, "authorization_token": token}),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          uploadedTranslations[index] = {
+            ...translation,
+            "liked_human": !liked,
+            "human_likes": (translation["human_likes"] ?? 0) + (liked ? -1 : 1),
+          };
+        });
+      }
+    } catch (e) {
+      print("Error liking/unliking human translation: $e");
+    }
+  }
+
+void _toggleLikeAI(int index) async {
+  final translation = uploadedTranslations[index];
+  final id = translation["id"];
+  final user = SessionManager().getCurrentUser();
+  final userId = user?.uid;
+  final token = user?.token;
+
+  if (id == null || userId == null || token == null) return;
+
+
+  final bool liked = translation["liked_ai"] ?? false;
+  final endpoint = liked 
+      ? "https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/ai/unlike" 
+      : "https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/ai/like";
+
+  try {
+    final response = await http.post(
+      Uri.parse(endpoint),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"uid": userId, "authorization_token": token}),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        uploadedTranslations[index] = {
+          ...translation,
+          "liked_ai": !liked,
+          "ai_likes": (translation["ai_likes"] ?? 0) + (liked ? -1 : 1),
+        };
+      });
+    }
+  } catch (e) {
+    print("Error liking/unliking AI translation: $e");
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -171,13 +208,23 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Visibility(
         visible: isLoaded,
-        replacement: const Center(child: CircularProgressIndicator(),),
+        replacement: const Center(child: CircularProgressIndicator()),
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: ListView.builder(
-            itemCount: translations.length,
+            itemCount: uploadedTranslations.length,
             itemBuilder: (context, index) {
-              final translation = translations[index];
+              final translation = uploadedTranslations[index];
+              final originalText = translation["original_text"] ?? "";
+              final humanTranslatedText = translation["human_translated"] ?? "";
+              final originalLang = translation["original_lang"] ?? "";
+              final translatedLang = translation["translated_lang"] ?? "";
+              final aiTranslated = translation["ai_translated"] ?? "";
+              final likesHuman = translation["human_likes"] ?? 0;
+              final likedHuman = translation["liked_human"] ?? false;
+              final likesAi = translation["ai_likes"] ?? 0;
+              final likedAi = translation["liked_ai"] ?? false;
+
               return Card(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 3,
@@ -189,82 +236,44 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       ListTile(
                         leading: const Icon(Icons.g_translate, color: Colors.blueAccent),
-                        // title: Text(
-                        //   translation["original"]!,
-                        //   style: const TextStyle(fontWeight: FontWeight.bold),
-                        // ),
-                        title: Text(posts![index].title, style: TextStyle(fontWeight: FontWeight.bold)),
+                        title: Text(
+                              originalText,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Text(translation["translated"]!),
-                            Text(posts![index].body ?? ''),
+                            Text(humanTranslatedText),
+                            Text("(AI) ${aiTranslated}"),
                             Text(
-                              "Language: ${translation["language"]}",
-                              style: const TextStyle(fontSize: 12, color: Colors.grey),
-                            ),
-                            Text(
-                              "By: ${translation["user"]}",
+                              "Translated from $originalLang to $translatedLang",
                               style: const TextStyle(fontSize: 12, color: Colors.grey),
                             ),
                           ],
                         ),
-                        
                         trailing: Row(
-                          mainAxisSize: MainAxisSize.min, 
+                          mainAxisSize: MainAxisSize.min,
                           children: [
+                            Text("${likesHuman}"),
                             IconButton(
                               icon: Icon(
-                                translation["liked"] ? Icons.favorite : Icons.favorite_border,
-                                color: translation["liked"] ? Colors.red : Colors.grey,
+                                likedHuman ? Icons.favorite : Icons.favorite_border,
+                                color: likedHuman ? Colors.red : Colors.grey,
                               ),
-                              onPressed: () => _toggleLike(index),
+                              onPressed: () => _toggleLikeHuman(index),
                             ),
-                            Text(
-                              "${translation["likes"]} likes",
-                              style: const TextStyle(fontSize: 14), 
+
+                            Text("${likesAi}"),
+                            IconButton(
+                              icon: Icon(
+                                likedAi ? Icons.star : Icons.star_border,
+                                color: likedAi ? Colors.yellow : Colors.grey,
+                              ),
+                              onPressed: () => _toggleLikeAI(index),
                             ),
                           ],
                         ),
-        
                       ),
-                      const Divider(),
-        
-                      // Comments Section
-                      // Text(
-                      //   "Comments:",
-                      //   style: GoogleFonts.bebasNeue(fontSize: 20, color: theme.onSurface),
-                      // ),
-                      // ...translation["comments"].map<Widget>((comment) => Padding(
-                      //       padding: const EdgeInsets.symmetric(vertical: 4),
-                      //       child: Row(
-                      //         children: [
-                      //           const Icon(Icons.comment, size: 16, color: Colors.grey),
-                      //           const SizedBox(width: 8),
-                      //           Expanded(
-                      //             child: Text(
-                      //               "${comment["user"]}: ${comment["text"]}",
-                      //               style: const TextStyle(fontSize: 14),
-                      //             ),
-                      //           ),
-                      //         ],
-                      //       ),
-                      //     )),
-        
-                      // Add Comment Button (Better Placement)
-                      // Align(
-                      //   alignment: Alignment.centerRight,
-                      //   child: ElevatedButton.icon(
-                      //     onPressed: () => _showCommentDialog(index),
-                      //     icon: const Icon(Icons.add_comment, size: 20, color: Colors.white),
-                      //     label: const Text("Add Comment"),
-                      //     style: ElevatedButton.styleFrom(
-                      //       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      //       backgroundColor: theme.primary,
-                      //       foregroundColor: Colors.white,
-                      //     ),
-                      //   ),
-                      // ),
                     ],
                   ),
                 ),
@@ -278,66 +287,4 @@ class _HomePageState extends State<HomePage> {
 }
 
 
-// ______________________________________________________________________________________________________
 
-
-
-// import 'package:flutter/material.dart';
-// import 'package:google_fonts/google_fonts.dart';
-// import 'package:trate/services/test_service.dart';
-// import 'package:trate/models/test_model.dart';
-
-// class HomePage extends StatefulWidget {
-//   const HomePage({super.key});
-
-//   @override
-//   State<HomePage> createState() => _HomePageState();
-// }
-
-// class _HomePageState extends State<HomePage> {
-//   List<Post>? posts;
-//   var isLoaded = false;
-
-//   @override
-//   void initState() {
-//     super.initState();
-
-//     getData();
-//   }
-
-//   getData() async {
-//     posts = await TestService().getPosts();
-//     if (posts != null) {
-//       setState(() {
-//         isLoaded = true;
-//       });
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text('TRATE', style: GoogleFonts.bebasNeue(fontSize: 25)),
-//         centerTitle: true,
-//       ),
-//       body: Visibility(
-//         visible: isLoaded,
-//         replacement: const Center(child: CircularProgressIndicator(),),
-//         child: ListView.builder(
-//           itemCount: posts?.length,
-//           itemBuilder: (context, index) {
-//             return Container(
-//               child: Column(
-//                 children: [
-//                   Text(posts![index].title, style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500)),
-//                   Text(posts![index].body ?? ''),
-//                 ],
-//               ),
-//             );
-//           }
-//         ),
-//       )
-//     );
-//   }
-// }

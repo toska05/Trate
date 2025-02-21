@@ -21,13 +21,14 @@ class _RegisterPageState extends State<RegisterPage> {
   final _confirmPasswordController = TextEditingController();
 
   @override
-
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
+  @override
   void initState() {
     super.initState();
     registerRequestModel = RegisterRequestModel();
@@ -59,7 +60,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     color: Theme.of(context).primaryColor,
                     boxShadow: [
                       BoxShadow(
-                        color: Theme.of(context).hintColor.withValues(alpha: 0.2),
+                        color: Theme.of(context).hintColor.withOpacity(0.2),
                         offset: Offset(0, 10),
                         blurRadius: 20,
                       ),
@@ -80,19 +81,20 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         SizedBox(height: 20),
                         TextFormField(
+                          controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          onSaved: (input) => registerRequestModel.email = input!,
-                          validator: (input) => !input!.contains('@')
-                              ? "Enter a valid email"
-                              : null,
+                          validator:
+                              (input) =>
+                                  !input!.contains('@')
+                                      ? "Enter a valid email"
+                                      : null,
                           decoration: InputDecoration(
                             hintText: "Email Address",
                             enabledBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .secondary
-                                    .withValues(alpha: 0.2),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.secondary.withValues(alpha: 0.2),
                               ),
                             ),
                             focusedBorder: UnderlineInputBorder(
@@ -108,20 +110,21 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         SizedBox(height: 20),
                         TextFormField(
+                          controller: _passwordController,
                           keyboardType: TextInputType.text,
-                          onSaved: (input) => registerRequestModel.password = input!,
-                          validator: (input) => input!.length < 3
-                              ? "Password should be at least 3 characters"
-                              : null,
                           obscureText: hidePassword,
+                          validator:
+                              (input) =>
+                                  input!.length < 3
+                                      ? "Password should be at least 3 characters"
+                                      : null,
                           decoration: InputDecoration(
                             hintText: "Password",
                             enabledBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .secondary
-                                    .withValues(alpha: 0.2),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.secondary.withValues(alpha: 0.2),
                               ),
                             ),
                             focusedBorder: UnderlineInputBorder(
@@ -139,10 +142,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                   hidePassword = !hidePassword;
                                 });
                               },
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .secondary
-                                  .withValues(alpha: 0.2),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.secondary.withValues(alpha: 0.2),
                               icon: Icon(
                                 hidePassword
                                     ? Icons.visibility_off
@@ -155,6 +157,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         TextFormField(
                           controller: _confirmPasswordController,
                           keyboardType: TextInputType.text,
+                          obscureText: hidePassword,
                           validator: (input) {
                             if (input == null || input.isEmpty) {
                               return "Please confirm your password";
@@ -164,12 +167,13 @@ class _RegisterPageState extends State<RegisterPage> {
                             }
                             return null;
                           },
-                          obscureText: hidePassword,
                           decoration: InputDecoration(
                             hintText: "Confirm Password",
                             enabledBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.secondary.withValues(alpha: 0.2),
                               ),
                             ),
                             focusedBorder: UnderlineInputBorder(
@@ -178,12 +182,11 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                             ),
                             prefixIcon: Icon(
-                              Icons.lock_outline,
+                              Icons.email,
                               color: Theme.of(context).colorScheme.secondary,
                             ),
                           ),
                         ),
-
                         SizedBox(height: 30),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
@@ -197,40 +200,38 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           onPressed: () {
                             if (validateAndSave()) {
-                              setState(() {
-                                isApiCallProcess = true;
-                              });
+                              setState(() => isApiCallProcess = true);
+                              registerRequestModel.email =
+                                  _emailController.text;
+                              registerRequestModel.password =
+                                  _passwordController.text;
 
-                              APIService apiService = APIService();
-                              apiService.register(registerRequestModel).then((value) {
-                                setState(() {
-                                  isApiCallProcess = false;
-                                });
-
-                                if (value.token.isNotEmpty) {
-                                  Navigator.pushReplacement(
+                              RegisterService apiService = RegisterService();
+                              apiService
+                                  .register(registerRequestModel)
+                                  .then((value) {
+                                    setState(() => isApiCallProcess = false);
+                                    if (value.token.isNotEmpty) {
+                                      Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) => NavBar(),
                                         ),
-                                  );
-                                } else {
-                                  final snackBar = SnackBar(
-                                    content: Text(value.error),
-                                  );
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(snackBar);
-                                }
-                              }).catchError((e) {
-                                setState(() {
-                                  isApiCallProcess = false;
-                                });
-                                final snackBar = SnackBar(
-                                  content: Text("Error: $e"),
-                                );
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(snackBar);
-                              });
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(content: Text(value.error)),
+                                      );
+                                    }
+                                  })
+                                  .catchError((e) {
+                                    setState(() => isApiCallProcess = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text("Error: $e")),
+                                    );
+                                  });
                             }
                           },
                           child: Text(
@@ -244,19 +245,16 @@ class _RegisterPageState extends State<RegisterPage> {
                           children: [
                             const Text(
                               'Already have an account? ',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => LoginPage(),
+                              onTap:
+                                  () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => LoginPage(),
+                                    ),
                                   ),
-                                );
-                              },
                               child: Text(
                                 'Login Now',
                                 style: TextStyle(
