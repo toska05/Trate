@@ -15,6 +15,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> uploadedTranslations = [];
+  List<Future<Map<String, dynamic>>> fetchLikesTasks = [];
   var isLoaded = true;
 
   @override
@@ -84,6 +85,126 @@ class _HomePageState extends State<HomePage> {
   // }
 
 
+
+
+//test
+// Future<void> _uploadTranslations() async {
+//   final user = SessionManager().getCurrentUser();
+//   final userId = user?.uid;
+//   final token = user?.token;
+
+//   if (userId == null || token == null) {
+//     if (mounted) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(content: Text("Session expired. Please login again.")),
+//       );
+//     }
+//     return;
+//   }
+
+//   try {
+//     final response = await http.post(
+//       Uri.parse('https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section'),
+//       headers: {"Content-Type": "application/json"},
+//       body: jsonEncode({"uid": userId, "authorization_token": token}),
+//     );
+
+//     if (response.statusCode == 200) {
+//       final dynamic data = json.decode(response.body);
+//       print("API Response: ${response.body}");
+
+//       if (data is Map && data.containsKey('grade')) {
+//         final List<dynamic> grade = data['grade'];
+
+//         // Pobieramy polubienia dla każdego tłumaczenia
+//         List<Future<Map<String, dynamic>>> fetchLikesTasks = grade
+//             .map((translation) => _fetchLikesForTranslation(translation, userId, token))
+//             .toList();
+
+//         // Czekamy na wszystkie pobrania
+//         List<Map<String, dynamic>> translations = await Future.wait(fetchLikesTasks);
+
+//         setState(() {
+//           uploadedTranslations = translations;
+//           isLoaded = true;
+//         });
+//       } else {
+//         setState(() {
+//           isLoaded = true;
+//         });
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           const SnackBar(content: Text("No translations found.")),
+//         );
+//       }
+//     } else {
+//       setState(() {
+//         isLoaded = true;
+//       });
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text("Failed to fetch translations: ${response.statusCode}")),
+//       );
+//     }
+//   } catch (e) {
+//     setState(() {
+//       isLoaded = true;
+//     });
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(content: Text("Error fetching translations: ${e.toString()}")),
+//     );
+//   }
+// }
+
+// Future<Map<String, dynamic>> _fetchLikesForTranslation(
+//     Map<String, dynamic> translation, String userId, String token) async {
+//   final id = translation["id"];
+//   if (id == null) return translation;
+
+//   try {
+//     // Pobieramy ilość polubień
+//     final likesResponse = await http.post(
+//       Uri.parse('https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/likesamount'),
+//       headers: {"Content-Type": "application/json"},
+//       body: jsonEncode({"uid": userId, "authorization_token": token}),
+//     );
+
+//     if (likesResponse.statusCode == 200) {
+//       final likesData = json.decode(likesResponse.body);
+//       translation["human_likes"] = likesData["human_likes"] ?? 0;
+//       translation["ai_likes"] = likesData["ai_likes"] ?? 0;
+//     } else {
+//       translation["human_likes"] = 0;
+//       translation["ai_likes"] = 0;
+//     }
+
+//     // Pobieramy informacje, czy użytkownik polubił
+//     final likedResponse = await http.post(
+//       Uri.parse('https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/liked'),
+//       headers: {"Content-Type": "application/json"},
+//       body: jsonEncode({"uid": userId, "authorization_token": token}),
+//     );
+
+//     if (likedResponse.statusCode == 200) {
+//       final likedData = json.decode(likedResponse.body);
+//       translation["liked_human"] = likedData["liked_human"] ?? false;
+//       translation["liked_ai"] = likedData["liked_ai"] ?? false;
+//     } else {
+//       translation["liked_human"] = false;
+//       translation["liked_ai"] = false;
+//     }
+//   } catch (e) {
+//     print("Error fetching likes for translation $id: $e");
+//   }
+
+//   return translation; // Zwracamy zaktualizowany obiekt
+// }
+
+
+
+
+
+
+
+
   Future<void> _uploadTranslations() async {
     final user = SessionManager().getCurrentUser();
     final userId = user?.uid;
@@ -114,16 +235,20 @@ class _HomePageState extends State<HomePage> {
 
         if (data is Map && data.containsKey('grade')) {
           final List<dynamic> grade = data['grade'];
-          List<Future<void>> fetchLikesTasks = [];
+          List<Future<Map<String, dynamic>>> fetchLikesTasks = [];
 
           for (var translation in grade) {
             fetchLikesTasks.add(_fetchLikesForTranslation(translation, userId, token));
           }
+          
 
-          await Future.wait(fetchLikesTasks);
+          var translations = await Future.wait(fetchLikesTasks);
+          // await Future.wait(fetchLikesTasks);
 
           setState(() {
-            uploadedTranslations = grade.cast<Map<String, dynamic>>();
+            // uploadedTranslations = grade.cast<Map<String, dynamic>>();
+            uploadedTranslations = translations;
+            // uploadedLikesTasks = 
             isLoaded = true;
           });
         } else {
@@ -152,9 +277,10 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _fetchLikesForTranslation(Map<String, dynamic> translation, String userId, String token) async {
+  Future<Map<String, dynamic>> _fetchLikesForTranslation(Map<String, dynamic> translation, String userId, String token) async {
+    print(translation);
     final id = translation["id"];
-    if (id == null) return;
+    if (id == null) return translation;
 
     try {
       final likesResponse = await http.post(
@@ -167,6 +293,7 @@ class _HomePageState extends State<HomePage> {
         final likesData = json.decode(likesResponse.body);
         translation["human_likes"] = likesData["human_likes"] ?? 0;
         translation["ai_likes"] = likesData["ai_likes"] ?? 0;
+        // return translation;
       }
 
       final likedResponse = await http.post(
@@ -177,12 +304,16 @@ class _HomePageState extends State<HomePage> {
 
       if (likedResponse.statusCode == 200) {
         final likedData = json.decode(likedResponse.body);
+        print(likedData);
         translation["liked_human"] = likedData["liked_human"] ?? false;
         translation["liked_ai"] = likedData["liked_ai"] ?? false;
       }
+      
     } catch (e) {
       print("Error fetching likes for translation $id: $e");
     }
+    print(translation);
+    return translation;
   }
 
   void _toggleLikeHuman(int index) async {
@@ -305,10 +436,10 @@ void _toggleLikeAI(int index) async {
                               "Translated from $originalLang to $translatedLang",
                               style: const TextStyle(fontSize: 12, color: Colors.grey),
                             ),
-                            Text(
-                              "By: ${userUid}",
-                              style: const TextStyle(fontSize: 12, color: Colors.grey),
-                            ),
+                            // Text(
+                            //   "By: ${userUid}",
+                            //   style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            // ),
                           ],
                         ),
                         trailing: Row(
