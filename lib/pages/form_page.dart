@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trate/models/tranlation_data_model.dart';
 import 'package:trate/services/translation_data_service.dart';
+import 'package:trate/services/session_manager.dart';
+
 
 class FormPage extends StatefulWidget {
   const FormPage({super.key});
@@ -11,6 +13,7 @@ class FormPage extends StatefulWidget {
 }
 
 class _FormPageState extends State<FormPage> {
+  final String userUid = SessionManager().getCurrentUserId() ?? '';
   final _textController = TextEditingController();
   final _translationController = TextEditingController();
   String _selectedLanguageone = 'English';
@@ -138,7 +141,7 @@ class _FormPageState extends State<FormPage> {
                   onPressed: () async {
                     if (_textController.text.isNotEmpty && _translationController.text.isNotEmpty) {
                       Post newPost = Post(
-                        uid: DateTime.now().millisecondsSinceEpoch.toString(), // tymczasowe unikalne ID
+                        uid: userUid,
                         originalText: _textController.text,
                         originalLang: _selectedLanguageone,
                         translatedText: _translationController.text,

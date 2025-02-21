@@ -678,6 +678,18 @@ class _RegisterPageState extends State<RegisterPage> {
                                       : null,
                           decoration: InputDecoration(
                             hintText: "Email Address",
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.secondary.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                            ),
                             prefixIcon: Icon(
                               Icons.email,
                               color: Theme.of(context).colorScheme.secondary,
@@ -696,8 +708,39 @@ class _RegisterPageState extends State<RegisterPage> {
                                   input!.length < 3
                                       ? "Password should be at least 3 characters"
                                       : null,
+                          // decoration: InputDecoration(
+                          //   hintText: "Password",
+                          //   prefixIcon: Icon(
+                          //     Icons.lock,
+                          //     color: Theme.of(context).colorScheme.secondary,
+                          //   ),
+                          //   suffixIcon: IconButton(
+                          //     onPressed: () {
+                          //       setState(() {
+                          //         hidePassword = !hidePassword;
+                          //       });
+                          //     },
+                          //     icon: Icon(
+                          //       hidePassword
+                          //           ? Icons.visibility_off
+                          //           : Icons.visibility,
+                          //     ),
+                          //   ),
+                          // ),
                           decoration: InputDecoration(
                             hintText: "Password",
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.secondary.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                            ),
                             prefixIcon: Icon(
                               Icons.lock,
                               color: Theme.of(context).colorScheme.secondary,
@@ -708,6 +751,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                   hidePassword = !hidePassword;
                                 });
                               },
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.secondary.withValues(alpha: 0.2),
                               icon: Icon(
                                 hidePassword
                                     ? Icons.visibility_off
@@ -732,8 +778,20 @@ class _RegisterPageState extends State<RegisterPage> {
                           },
                           decoration: InputDecoration(
                             hintText: "Confirm Password",
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.secondary.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                            ),
                             prefixIcon: Icon(
-                              Icons.lock_outline,
+                              Icons.email,
                               color: Theme.of(context).colorScheme.secondary,
                             ),
                           ),

@@ -1,193 +1,12 @@
-// import 'package:flutter/material.dart';
-// import 'package:google_fonts/google_fonts.dart';
-// import 'package:trate/services/test_service.dart';
-// import 'package:trate/models/test_model.dart';
-
-// class HomePage extends StatefulWidget {
-//   const HomePage({Key? key}) : super(key: key);
-
-//   @override
-//   State<HomePage> createState() => _HomePageState();
-// }
-
-// class _HomePageState extends State<HomePage> {
-//   List<Post>? posts;
-//   var isLoaded = false;
-
-//   @override
-//   void initState() {
-//     super.initState();
-
-//     getData();
-//   }
-
-//   getData() async {
-//     posts = await TestService().getPosts();
-//     if (posts != null) {
-//       setState(() {
-//         isLoaded = true;
-//       });
-//     }
-//   }
-  
-//   final List<Map<String, dynamic>> translations = [
-//     {
-//       "user": "alice@example.com",
-//       "original": "Hello",
-//       "translated": "Hola",
-//       "language": "Spanish",
-//       "liked": false,
-//       "likes": 3,
-//     },
-//     {
-//       "user": "bob@example.com",
-//       "original": "Thank you",
-//       "translated": "Merci",
-//       "language": "French",
-//       "liked": false,
-//       "likes": 5,
-//     },
-//     {
-//       "user": "charlie@example.com",
-//       "original": "Good morning",
-//       "translated": "Guten Morgen",
-//       "language": "German",
-//       "liked": false,
-//       "likes": 2,
-//     },
-//     {
-//       "user": "david@example.com",
-//       "original": "I love Flutter",
-//       "translated": "Me encanta Flutter",
-//       "language": "Spanish",
-//       "liked": false,
-//       "likes": 10,
-//     },
-//     {
-//       "user": "sarah@example.com",
-//       "original": "How are you?",
-//       "translated": "Wie geht's?",
-//       "language": "German",
-//       "liked": false,
-//       "likes": 7,
-//     },
-//     {
-//       "user": "tom@example.com",
-//       "original": "See you later",
-//       "translated": "À plus tard",
-//       "language": "French",
-//       "liked": false,
-//       "likes": 4,
-//     },
-//   ];
-
-//   void _toggleLike(int index) {
-//     setState(() {
-//       if (translations[index]["liked"]) {
-//         translations[index]["likes"]--;
-//       } else {
-//         translations[index]["likes"]++;
-//       }
-//       translations[index]["liked"] = !translations[index]["liked"];
-//     });
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final theme = Theme.of(context).colorScheme;
-
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text('TRATE', style: GoogleFonts.bebasNeue(fontSize: 25)),
-//         backgroundColor: theme.primary,
-//         centerTitle: true,
-//       ),
-//       body: Visibility(
-//         visible: isLoaded,
-//         replacement: const Center(child: CircularProgressIndicator(),),
-//         child: Padding(
-//           padding: const EdgeInsets.all(20.0),
-//           child: ListView.builder(
-//             itemCount: translations.length,
-//             itemBuilder: (context, index) {
-//               final translation = translations[index];
-//               return Card(
-//                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//                 elevation: 3,
-//                 margin: const EdgeInsets.symmetric(vertical: 8),
-//                 child: Padding(
-//                   padding: const EdgeInsets.all(12),
-//                   child: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: [
-//                       ListTile(
-//                         leading: const Icon(Icons.g_translate, color: Colors.blueAccent),
-//                         // title: Text(
-//                         //   translation["original"]!,
-//                         //   style: const TextStyle(fontWeight: FontWeight.bold),
-//                         // ),
-//                         title: Text(posts![index].title, style: TextStyle(fontWeight: FontWeight.bold)),
-//                         subtitle: Column(
-//                           crossAxisAlignment: CrossAxisAlignment.start,
-//                           children: [
-//                             // Text(translation["translated"]!),
-//                             Text(posts![index].body ?? ''),
-//                             Text(
-//                               "Language: ${translation["language"]}",
-//                               style: const TextStyle(fontSize: 12, color: Colors.grey),
-//                             ),
-//                             Text(
-//                               "By: ${translation["user"]}",
-//                               style: const TextStyle(fontSize: 12, color: Colors.grey),
-//                             ),
-//                           ],
-//                         ),
-                        
-//                         trailing: Row(
-//                           mainAxisSize: MainAxisSize.min, 
-//                           children: [
-//                             IconButton(
-//                               icon: Icon(
-//                                 translation["liked"] ? Icons.favorite : Icons.favorite_border,
-//                                 color: translation["liked"] ? Colors.red : Colors.grey,
-//                               ),
-//                               onPressed: () => _toggleLike(index),
-//                             ),
-//                             Text(
-//                               "${translation["likes"]} likes",
-//                               style: const TextStyle(fontSize: 14), 
-//                             ),
-//                           ],
-//                         ),
-        
-//                       ),
-//                       const Divider(),
-        
-                      
-//                     ],
-//                   ),
-//                 ),
-//               );
-//             },
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-
-
-
-
-
-
-//test
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:trate/services/grade_service.dart';
 import 'package:trate/models/grade_model.dart';
+import 'package:trate/services/session_manager.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -197,25 +16,79 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Post>? posts;
-  var isLoaded = false;
+  List<Map<String, dynamic>> uploadedTranslations = [];
+  var isLoaded = true;
+  // late String uid;
 
   @override
   void initState() {
     super.initState();
-    getData();
+    _uploadTranslations();
   }
 
-  getData() async {
-    posts = await GradeService().getPosts();
-    if (posts != null) {
+  Future<void> _uploadTranslations() async {
+    final user = SessionManager().getCurrentUser();
+    final userId = user?.uid;
+    final token = user?.token;
+
+    if (userId == null || token == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Session expired. Please login again.")),
+        );
+      }
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "uid": userId,
+          "authorization_token": token
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final dynamic data = json.decode(response.body);
+        print("API Response: ${response.body}");
+
+        if (data is Map && data.containsKey('grade')) {
+          final List<dynamic> grade = data['grade'];
+          setState(() {
+            uploadedTranslations = grade.cast<Map<String, dynamic>>();
+            isLoaded = true;
+          });
+        } else {
+          setState(() {
+            isLoaded = true;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("No translations found.")),
+          );
+        }
+      } else {
+        setState(() {
+          isLoaded = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to fetch translations: ${response.statusCode}")),
+        );
+      }
+    } catch (e) {
       setState(() {
         isLoaded = true;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error fetching translations: ${e.toString()}")),
+      );
     }
   }
 
-  final List<Map<String, dynamic>> translations = [
+  
+
+  final List<Map<String, dynamic>> templates = [
     {
       "user": "alice@example.com",
       "original": "Hello",
@@ -256,29 +129,29 @@ class _HomePageState extends State<HomePage> {
 
   void _toggleLike(int index) {
     setState(() {
-      if (translations[index]["liked"]) {
-        translations[index]["likes"]--;
+      if (templates[index]["liked"]) {
+        templates[index]["likes"]--;
       } else {
-        translations[index]["likes"]++;
+        templates[index]["likes"]++;
       }
-      translations[index]["liked"] = !translations[index]["liked"];
+      templates[index]["liked"] = !templates[index]["liked"];
     });
   }
 
   void _toggleStar(int index) {
     setState(() {
-      if (translations[index]["starred"]) {
-        translations[index]["stars"]--;
+      if (templates[index]["starred"]) {
+        templates[index]["stars"]--;
       } else {
-        translations[index]["stars"]++;
+        templates[index]["stars"]++;
       }
-      translations[index]["starred"] = !translations[index]["starred"];
+      templates[index]["starred"] = !templates[index]["starred"];
     });
   }
 
   void _toggleAI(int index) {
     setState(() {
-      translations[index]["aied"] = !translations[index]["aied"];
+      templates[index]["aied"] = !templates[index]["aied"];
     });
   }
 
@@ -298,9 +171,17 @@ class _HomePageState extends State<HomePage> {
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: ListView.builder(
-            itemCount: translations.length,
+            itemCount: uploadedTranslations.length,
             itemBuilder: (context, index) {
-              final translation = translations[index];
+              final template = templates[index];
+              final translation = uploadedTranslations[index];
+              final userUid = translation["id"] ?? "";
+              final originalText = translation["original_text"] ?? "";
+              final humanTranslatedText = translation["human_translated"] ?? "";
+              final originalLang = translation["original_lang"] ?? "";
+              final translatedLang = translation["translated_lang"] ?? "";
+              final aiTranslated = translation["ai_translated"] ?? "";
+
               return Card(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 3,
@@ -316,18 +197,21 @@ class _HomePageState extends State<HomePage> {
                         //   translation["original"],
                         //   style: const TextStyle(fontWeight: FontWeight.bold),
                         // ),
-                        title: Text(posts![index].originalText, style: TextStyle(fontWeight: FontWeight.bold)),
+                        title: Text(
+                              originalText,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Text(translation["translated"]),
-                            Text(posts![index].translatedLang),
+                            Text(humanTranslatedText),
                             Text(
-                              "Language: ${translation["language"]}",
+                              "Translated from $originalLang to $translatedLang",
                               style: const TextStyle(fontSize: 12, color: Colors.grey),
                             ),
                             Text(
-                              "By: ${translation["user"]}",
+                              "By: ${userUid}",
                               style: const TextStyle(fontSize: 12, color: Colors.grey),
                             ),
                           ],
@@ -337,42 +221,42 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             IconButton(
                               icon: Icon(
-                                translation["aied"] ? Icons.smart_button : Icons.smart_button_outlined,
-                                color: translation["aied"] ? Colors.blue : Colors.grey,
+                                template["aied"] ? Icons.smart_button : Icons.smart_button_outlined,
+                                color: template["aied"] ? Colors.blue : Colors.grey,
                               ),
                               onPressed: () => _toggleAI(index),
                             ),
                             IconButton(
                               icon: Icon(
-                                translation["starred"] ? Icons.star : Icons.star_border,
-                                color: translation["starred"] ? Colors.yellow : Colors.grey,
+                                template["starred"] ? Icons.star : Icons.star_border,
+                                color: template["starred"] ? Colors.yellow : Colors.grey,
                               ),
                               onPressed: () => _toggleStar(index),
                             ),
                             Text(
-                              "${translation["stars"]}",
+                              "${template["stars"]}",
                               style: const TextStyle(fontSize: 14),
                             ),
                             IconButton(
                               icon: Icon(
-                                translation["liked"] ? Icons.favorite : Icons.favorite_border,
-                                color: translation["liked"] ? Colors.red : Colors.grey,
+                                template["liked"] ? Icons.favorite : Icons.favorite_border,
+                                color: template["liked"] ? Colors.red : Colors.grey,
                               ),
                               onPressed: () => _toggleLike(index),
                             ),
                             Text(
-                              "${translation["likes"]}",
+                              "${template["likes"]}",
                               style: const TextStyle(fontSize: 14),
                             ),
                           ],
                         ),
                       ),
-                      if (translation["aied"]) ...[
+                      if (template["aied"]) ...[
                         const Divider(),
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: Text(
-                            "AI: ${translation["alternative"]}",
+                            "AI: ${aiTranslated}",
                             style: const TextStyle(fontSize: 16),
                           ),
                         ),
@@ -388,3 +272,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
+
+
