@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-// import 'package:google_fonts/google_fonts.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:trate/pages/profile_page.dart';
 import 'package:trate/pages/form_page.dart';
@@ -34,11 +33,6 @@ class _NavBarState extends State<NavBar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: Text('Trate', style: GoogleFonts.bebasNeue(fontSize: 25)),
-      //   backgroundColor: Theme.of(context).colorScheme.primary,
-      //   centerTitle: true,
-      // ),
       body: Center(child: _screens[_currentIndex]),
       bottomNavigationBar: Material(
         color: Theme.of(context).colorScheme.surface,

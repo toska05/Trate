@@ -3,8 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-import 'package:trate/services/grade_service.dart';
-import 'package:trate/models/grade_model.dart';
 import 'package:trate/services/session_manager.dart';
 
 
@@ -18,7 +16,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> uploadedTranslations = [];
   var isLoaded = true;
-  // late String uid;
 
   @override
   void initState() {
@@ -193,10 +190,6 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       ListTile(
                         leading: const Icon(Icons.g_translate, color: Colors.blueAccent),
-                        // title: Text(
-                        //   translation["original"],
-                        //   style: const TextStyle(fontWeight: FontWeight.bold),
-                        // ),
                         title: Text(
                               originalText,
                               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -204,7 +197,6 @@ class _HomePageState extends State<HomePage> {
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Text(translation["translated"]),
                             Text(humanTranslatedText),
                             Text(
                               "Translated from $originalLang to $translatedLang",
