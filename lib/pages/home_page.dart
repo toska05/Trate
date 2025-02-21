@@ -24,187 +24,6 @@ class _HomePageState extends State<HomePage> {
     _uploadTranslations();
   }
 
-  // Future<void> _uploadTranslations() async {
-  //   final user = SessionManager().getCurrentUser();
-  //   final userId = user?.uid;
-  //   final token = user?.token;
-
-  //   if (userId == null || token == null) {
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(content: Text("Session expired. Please login again.")),
-  //       );
-  //     }
-  //     return;
-  //   }
-
-  //   try {
-  //     final response = await http.post(
-  //       Uri.parse('https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section'),
-  //       headers: {"Content-Type": "application/json"},
-  //       body: jsonEncode({
-  //         "uid": userId,
-  //         "authorization_token": token
-  //       }),
-  //     );
-
-  //     if (response.statusCode == 200) {
-  //       final dynamic data = json.decode(response.body);
-  //       print("API Response: ${response.body}");
-
-  //       if (data is Map && data.containsKey('grade')) {
-  //         final List<dynamic> grade = data['grade'];
-  //         setState(() {
-  //           uploadedTranslations = grade.cast<Map<String, dynamic>>();
-  //           isLoaded = true;
-  //         });
-  //       } else {
-  //         setState(() {
-  //           isLoaded = true;
-  //         });
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //           const SnackBar(content: Text("No translations found.")),
-  //         );
-  //       }
-  //     } else {
-  //       setState(() {
-  //         isLoaded = true;
-  //       });
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(content: Text("Failed to fetch translations: ${response.statusCode}")),
-  //       );
-  //     }
-  //   } catch (e) {
-  //     setState(() {
-  //       isLoaded = true;
-  //     });
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text("Error fetching translations: ${e.toString()}")),
-  //     );
-  //   }
-  // }
-
-
-
-
-//test
-// Future<void> _uploadTranslations() async {
-//   final user = SessionManager().getCurrentUser();
-//   final userId = user?.uid;
-//   final token = user?.token;
-
-//   if (userId == null || token == null) {
-//     if (mounted) {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(content: Text("Session expired. Please login again.")),
-//       );
-//     }
-//     return;
-//   }
-
-//   try {
-//     final response = await http.post(
-//       Uri.parse('https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section'),
-//       headers: {"Content-Type": "application/json"},
-//       body: jsonEncode({"uid": userId, "authorization_token": token}),
-//     );
-
-//     if (response.statusCode == 200) {
-//       final dynamic data = json.decode(response.body);
-//       print("API Response: ${response.body}");
-
-//       if (data is Map && data.containsKey('grade')) {
-//         final List<dynamic> grade = data['grade'];
-
-//         // Pobieramy polubienia dla każdego tłumaczenia
-//         List<Future<Map<String, dynamic>>> fetchLikesTasks = grade
-//             .map((translation) => _fetchLikesForTranslation(translation, userId, token))
-//             .toList();
-
-//         // Czekamy na wszystkie pobrania
-//         List<Map<String, dynamic>> translations = await Future.wait(fetchLikesTasks);
-
-//         setState(() {
-//           uploadedTranslations = translations;
-//           isLoaded = true;
-//         });
-//       } else {
-//         setState(() {
-//           isLoaded = true;
-//         });
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           const SnackBar(content: Text("No translations found.")),
-//         );
-//       }
-//     } else {
-//       setState(() {
-//         isLoaded = true;
-//       });
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text("Failed to fetch translations: ${response.statusCode}")),
-//       );
-//     }
-//   } catch (e) {
-//     setState(() {
-//       isLoaded = true;
-//     });
-//     ScaffoldMessenger.of(context).showSnackBar(
-//       SnackBar(content: Text("Error fetching translations: ${e.toString()}")),
-//     );
-//   }
-// }
-
-// Future<Map<String, dynamic>> _fetchLikesForTranslation(
-//     Map<String, dynamic> translation, String userId, String token) async {
-//   final id = translation["id"];
-//   if (id == null) return translation;
-
-//   try {
-//     // Pobieramy ilość polubień
-//     final likesResponse = await http.post(
-//       Uri.parse('https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/likesamount'),
-//       headers: {"Content-Type": "application/json"},
-//       body: jsonEncode({"uid": userId, "authorization_token": token}),
-//     );
-
-//     if (likesResponse.statusCode == 200) {
-//       final likesData = json.decode(likesResponse.body);
-//       translation["human_likes"] = likesData["human_likes"] ?? 0;
-//       translation["ai_likes"] = likesData["ai_likes"] ?? 0;
-//     } else {
-//       translation["human_likes"] = 0;
-//       translation["ai_likes"] = 0;
-//     }
-
-//     // Pobieramy informacje, czy użytkownik polubił
-//     final likedResponse = await http.post(
-//       Uri.parse('https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/liked'),
-//       headers: {"Content-Type": "application/json"},
-//       body: jsonEncode({"uid": userId, "authorization_token": token}),
-//     );
-
-//     if (likedResponse.statusCode == 200) {
-//       final likedData = json.decode(likedResponse.body);
-//       translation["liked_human"] = likedData["liked_human"] ?? false;
-//       translation["liked_ai"] = likedData["liked_ai"] ?? false;
-//     } else {
-//       translation["liked_human"] = false;
-//       translation["liked_ai"] = false;
-//     }
-//   } catch (e) {
-//     print("Error fetching likes for translation $id: $e");
-//   }
-
-//   return translation; // Zwracamy zaktualizowany obiekt
-// }
-
-
-
-
-
-
-
-
   Future<void> _uploadTranslations() async {
     final user = SessionManager().getCurrentUser();
     final userId = user?.uid;
@@ -231,7 +50,6 @@ class _HomePageState extends State<HomePage> {
 
       if (response.statusCode == 200) {
         final dynamic data = json.decode(response.body);
-        print("API Response: ${response.body}");
 
         if (data is Map && data.containsKey('grade')) {
           final List<dynamic> grade = data['grade'];
@@ -243,12 +61,9 @@ class _HomePageState extends State<HomePage> {
           
 
           var translations = await Future.wait(fetchLikesTasks);
-          // await Future.wait(fetchLikesTasks);
 
           setState(() {
-            // uploadedTranslations = grade.cast<Map<String, dynamic>>();
             uploadedTranslations = translations;
-            // uploadedLikesTasks = 
             isLoaded = true;
           });
         } else {
@@ -278,22 +93,18 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<Map<String, dynamic>> _fetchLikesForTranslation(Map<String, dynamic> translation, String userId, String token) async {
-    print(translation);
     final id = translation["id"];
     if (id == null) return translation;
 
     try {
-      final likesResponse = await http.post(
+      final likesResponse = await http.get(
         Uri.parse('https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/likesamount'),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"uid": userId, "authorization_token": token}),
       );
-
       if (likesResponse.statusCode == 200) {
         final likesData = json.decode(likesResponse.body);
         translation["human_likes"] = likesData["human_likes"] ?? 0;
         translation["ai_likes"] = likesData["ai_likes"] ?? 0;
-        // return translation;
       }
 
       final likedResponse = await http.post(
@@ -304,7 +115,6 @@ class _HomePageState extends State<HomePage> {
 
       if (likedResponse.statusCode == 200) {
         final likedData = json.decode(likedResponse.body);
-        print(likedData);
         translation["liked_human"] = likedData["liked_human"] ?? false;
         translation["liked_ai"] = likedData["liked_ai"] ?? false;
       }
@@ -312,7 +122,6 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       print("Error fetching likes for translation $id: $e");
     }
-    print(translation);
     return translation;
   }
 
@@ -339,8 +148,11 @@ class _HomePageState extends State<HomePage> {
 
       if (response.statusCode == 200) {
         setState(() {
-          translation["liked_human"] = !liked;
-          translation["human_likes"] += liked ? -1 : 1;
+          uploadedTranslations[index] = {
+            ...translation,
+            "liked_human": !liked,
+            "human_likes": (translation["human_likes"] ?? 0) + (liked ? -1 : 1),
+          };
         });
       }
     } catch (e) {
@@ -357,6 +169,7 @@ void _toggleLikeAI(int index) async {
 
   if (id == null || userId == null || token == null) return;
 
+
   final bool liked = translation["liked_ai"] ?? false;
   final endpoint = liked 
       ? "https://dcvsetdr5bygvesetvbgdewaxqcaefgt.uk/grade_section/grade/$id/ai/unlike" 
@@ -371,20 +184,17 @@ void _toggleLikeAI(int index) async {
 
     if (response.statusCode == 200) {
       setState(() {
-        translation["liked_ai"] = !liked;
-        translation["ai_likes"] += liked ? -1 : 1;
+        uploadedTranslations[index] = {
+          ...translation,
+          "liked_ai": !liked,
+          "ai_likes": (translation["ai_likes"] ?? 0) + (liked ? -1 : 1),
+        };
       });
     }
   } catch (e) {
     print("Error liking/unliking AI translation: $e");
   }
 }
-
-  // void _toggleAI(int index) {
-  //   setState(() {
-  //     templates[index]["aied"] = !templates[index]["aied"];
-  //   });
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -404,14 +214,16 @@ void _toggleLikeAI(int index) async {
           child: ListView.builder(
             itemCount: uploadedTranslations.length,
             itemBuilder: (context, index) {
-              // final template = templates[index];
               final translation = uploadedTranslations[index];
-              final userUid = translation["id"] ?? "";
               final originalText = translation["original_text"] ?? "";
               final humanTranslatedText = translation["human_translated"] ?? "";
               final originalLang = translation["original_lang"] ?? "";
               final translatedLang = translation["translated_lang"] ?? "";
               final aiTranslated = translation["ai_translated"] ?? "";
+              final likesHuman = translation["human_likes"] ?? 0;
+              final likedHuman = translation["liked_human"] ?? false;
+              final likesAi = translation["ai_likes"] ?? 0;
+              final likedAi = translation["liked_ai"] ?? false;
 
               return Card(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -432,49 +244,36 @@ void _toggleLikeAI(int index) async {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(humanTranslatedText),
+                            Text("(AI) ${aiTranslated}"),
                             Text(
                               "Translated from $originalLang to $translatedLang",
                               style: const TextStyle(fontSize: 12, color: Colors.grey),
                             ),
-                            // Text(
-                            //   "By: ${userUid}",
-                            //   style: const TextStyle(fontSize: 12, color: Colors.grey),
-                            // ),
                           ],
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text("${translation["human_likes"]}"),
+                            Text("${likesHuman}"),
                             IconButton(
                               icon: Icon(
-                                translation["liked_human"] ? Icons.favorite : Icons.favorite_border,
-                                color: translation["liked_human"] ? Colors.red : Colors.grey,
+                                likedHuman ? Icons.favorite : Icons.favorite_border,
+                                color: likedHuman ? Colors.red : Colors.grey,
                               ),
                               onPressed: () => _toggleLikeHuman(index),
                             ),
 
-                            Text("${translation["ai_likes"]}"),
+                            Text("${likesAi}"),
                             IconButton(
                               icon: Icon(
-                                translation["liked_ai"] ? Icons.star : Icons.star_border,
-                                color: translation["liked_ai"] ? Colors.yellow : Colors.grey,
+                                likedAi ? Icons.star : Icons.star_border,
+                                color: likedAi ? Colors.yellow : Colors.grey,
                               ),
                               onPressed: () => _toggleLikeAI(index),
                             ),
                           ],
                         ),
                       ),
-                      // if (template["aied"]) ...[
-                      //   const Divider(),
-                      //   Padding(
-                      //     padding: const EdgeInsets.only(top: 8),
-                      //     child: Text(
-                      //       "AI: ${aiTranslated}",
-                      //       style: const TextStyle(fontSize: 16),
-                      //     ),
-                      //   ),
-                      // ],
                     ],
                   ),
                 ),
